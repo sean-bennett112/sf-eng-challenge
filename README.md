@@ -101,12 +101,12 @@ The basic idea is that we'll have a schema for our api, called `api_v1`, and any
 
 From there, we'll tell:
 
-- Postgres to expose those tables as a [Publication]() so that Materialize will be able to see them
-- Materialize to create a [Source]() from our Postgres instance so it knows about those tables.
+- Postgres to expose those tables as a [Publication](https://www.postgresql.org/docs/14/sql-createpublication.html) so that Materialize will be able to see them
+- Materialize to create a [Source](https://materialize.com/docs/sql/create-source/postgres/) from our Postgres instance so it knows about those tables.
 
 Then we'll perform some basic joining on those views to get a table of `user_id` to `opportunity_id` matches. Our actual matching will be _incredibly simple_, performing a case-insensitive comparison between the roles and interests of the given opportunity and user, respectively.
 
-After that, we'll need to connect those match results back to Postgres, since anything we want to expose in our API via Postgraphile has to first be in the `api_v1` schema of Postgres. We do that via the [`postgres_fdw`]() [Foreign Data Wrapper](). This works because Materialize is wire-compatible with Postgres. So, at least according to Postgres, it's just another postgres instance.
+After that, we'll need to connect those match results back to Postgres, since anything we want to expose in our API via Postgraphile has to first be in the `api_v1` schema of Postgres. We do that via the [`postgres_fdw`](https://www.postgresql.org/docs/14/postgres-fdw.html) [Foreign Data Wrapper](https://www.postgresql.org/docs/current/sql-createforeigndatawrapper.html). This works because Materialize is wire-compatible with Postgres. So, at least according to Postgres, it's just another postgres instance.
 
 Finally, we wrap those results in another Postgres view to clean up some weird text-formatting from when converting the `jsonb` to `text`. Basically, `jsonb->text` conversion fails to remove wrapping quotes from the text, resulting in values like `\"Software Engineer\"`, which we don't want. Postgres has a nice way of easily cleaning that up, but it appears that Materialize doesn't.
 
